@@ -1,0 +1,802 @@
+[
+  {
+    "id": 3351345,
+    "name": "'Abasirah",
+    "country": "Yemen",
+    "latitude": 14.37,
+    "longitude": 45.385555555,
+    "population": 24
+  },
+  {
+    "id": 3248297,
+    "name": "'Abbad Maqbal",
+    "country": "Yemen",
+    "latitude": 14.830833333,
+    "longitude": 45.454166666,
+    "population": 3
+  },
+  {
+    "id": 3419416,
+    "name": "'Abd Al Wahid",
+    "country": "Yemen",
+    "latitude": 16.961944444,
+    "longitude": 43.250277777,
+    "population": 16
+  },
+  {
+    "id": 3239307,
+    "name": "'Abdanah",
+    "country": "Yemen",
+    "latitude": 16.501944444,
+    "longitude": 44.291944444,
+    "population": 3
+  },
+  {
+    "id": 3374191,
+    "name": "'Adhabah",
+    "country": "Yemen",
+    "latitude": 16.068055555,
+    "longitude": 43.429722222,
+    "population": 1
+  },
+  {
+    "id": 3252543,
+    "name": "'Adhir Hidha",
+    "country": "Yemen",
+    "latitude": 16.054444444,
+    "longitude": 43.721111111,
+    "population": 7
+  },
+  {
+    "id": 3406115,
+    "name": "'Afarah",
+    "country": "Yemen",
+    "latitude": 16.795277777,
+    "longitude": 43.364166666,
+    "population": 10
+  },
+  {
+    "id": 3337457,
+    "name": "'Afarat Al 'Ulya",
+    "country": "Yemen",
+    "latitude": 14.103055555,
+    "longitude": 45.778611111,
+    "population": 5
+  },
+  {
+    "id": 3319758,
+    "name": "'Afarat As Sufla",
+    "country": "Yemen",
+    "latitude": 14.105555555,
+    "longitude": 45.774166666,
+    "population": 4
+  },
+  {
+    "id": 3228875,
+    "name": "'Afawah",
+    "country": "Yemen",
+    "latitude": 16.499722222,
+    "longitude": 43.278611111,
+    "population": 6
+  },
+  {
+    "id": 3248778,
+    "name": "'Afiy",
+    "country": "Yemen",
+    "latitude": 16.962777777,
+    "longitude": 44.8925,
+    "population": 25
+  },
+  {
+    "id": 3427521,
+    "name": "'Aflah",
+    "country": "Yemen",
+    "latitude": 16.82,
+    "longitude": 43.265,
+    "population": 3
+  },
+  {
+    "id": 3338381,
+    "name": "'Afra",
+    "country": "Yemen",
+    "latitude": 16.106666666,
+    "longitude": 43.621666666,
+    "population": 2
+  },
+  {
+    "id": 3254717,
+    "name": "'Aftah",
+    "country": "Yemen",
+    "latitude": 16.233055555,
+    "longitude": 43.219166666,
+    "population": 26
+  },
+  {
+    "id": 3327634,
+    "name": "'Ahuqah",
+    "country": "Yemen",
+    "latitude": 13.197777777,
+    "longitude": 43.788055555,
+    "population": 31
+  },
+  {
+    "id": 3224045,
+    "name": "'Ajajah",
+    "country": "Yemen",
+    "latitude": 16.651388888,
+    "longitude": 46.288055555,
+    "population": 19
+  },
+  {
+    "id": 3193411,
+    "name": "'Ajajah",
+    "country": "Yemen",
+    "latitude": 17.073888888,
+    "longitude": 43.388888888,
+    "population": 7
+  },
+  {
+    "id": 3308711,
+    "name": "'Ajir",
+    "country": "Yemen",
+    "latitude": 16.153333333,
+    "longitude": 43.685555555,
+    "population": 4
+  },
+  {
+    "id": 3273075,
+    "name": "'Ajmat Al Quflah",
+    "country": "Yemen",
+    "latitude": 14.837777777,
+    "longitude": 45.468888888,
+    "population": 2
+  },
+  {
+    "id": 3304444,
+    "name": "'Ajr",
+    "country": "Yemen",
+    "latitude": 17.503611111,
+    "longitude": 43.281944444,
+    "population": 3
+  },
+  {
+    "id": 3226918,
+    "name": "'Akabah",
+    "country": "Yemen",
+    "latitude": 16.1075,
+    "longitude": 43.374166666,
+    "population": 17
+  },
+  {
+    "id": 3205042,
+    "name": "'Akadah",
+    "country": "Yemen",
+    "latitude": 16.761944444,
+    "longitude": 43.385555555,
+    "population": 7
+  },
+  {
+    "id": 3348994,
+    "name": "'Akawal",
+    "country": "Yemen",
+    "latitude": 17.1225,
+    "longitude": 43.252222222,
+    "population": 3
+  },
+  {
+    "id": 3310184,
+    "name": "'Akbara",
+    "country": "Israel",
+    "latitude": 32.939463888,
+    "longitude": 35.499338888,
+    "population": 0
+  },
+  {
+    "id": 3363317,
+    "name": "'Akkal",
+    "country": "Yemen",
+    "latitude": 16.675555555,
+    "longitude": 43.392222222,
+    "population": 2
+  },
+  {
+    "id": 3298864,
+    "name": "'Akramah",
+    "country": "Yemen",
+    "latitude": 16.306111111,
+    "longitude": 43.410277777,
+    "population": 4
+  },
+  {
+    "id": 3259264,
+    "name": "'Akramat Al 'Abbud",
+    "country": "Yemen",
+    "latitude": 14.9425,
+    "longitude": 45.465833333,
+    "population": 13
+  },
+  {
+    "id": 3560411,
+    "name": "'Akrush",
+    "country": "Yemen",
+    "latitude": 16.174166666,
+    "longitude": 42.836388888,
+    "population": 12
+  },
+  {
+    "id": 3210647,
+    "name": "'Ala Suhayf",
+    "country": "Yemen",
+    "latitude": 17.163055555,
+    "longitude": 43.223611111,
+    "population": 2
+  },
+  {
+    "id": 3348965,
+    "name": "'Alab Yahya",
+    "country": "Yemen",
+    "latitude": 16.1025,
+    "longitude": 43.719166666,
+    "population": 2
+  },
+  {
+    "id": 3375218,
+    "name": "'Alafah",
+    "country": "Yemen",
+    "latitude": 17.187777777,
+    "longitude": 43.238333333,
+    "population": 17
+  },
+  {
+    "id": 3319999,
+    "name": "'Alat Yimani",
+    "country": "Yemen",
+    "latitude": 16.140833333,
+    "longitude": 43.624444444,
+    "population": 2
+  },
+  {
+    "id": 3251126,
+    "name": "'Alayan",
+    "country": "Yemen",
+    "latitude": 16.943333333,
+    "longitude": 43.762777777,
+    "population": 96
+  },
+  {
+    "id": 3228191,
+    "name": "'Ali Al 'Ayn",
+    "country": "Yemen",
+    "latitude": 17.148888888,
+    "longitude": 43.251944444,
+    "population": 7
+  },
+  {
+    "id": 3269769,
+    "name": "'Ali Hadi",
+    "country": "Yemen",
+    "latitude": 16.015555555,
+    "longitude": 43.3475,
+    "population": 6
+  },
+  {
+    "id": 3299499,
+    "name": "'Ali Ibn Ahmad",
+    "country": "Yemen",
+    "latitude": 14.031388888,
+    "longitude": 45.572222222,
+    "population": 33
+  },
+  {
+    "id": 3325746,
+    "name": "'Ali Jabirah",
+    "country": "Yemen",
+    "latitude": 17.141388888,
+    "longitude": 43.255555555,
+    "population": 2
+  },
+  {
+    "id": 2977108,
+    "name": "'Ali Mas'Ud",
+    "country": "Yemen",
+    "latitude": 16.213055555,
+    "longitude": 52.190555555,
+    "population": 232
+  },
+  {
+    "id": 3416375,
+    "name": "'Ali Tariyah",
+    "country": "Yemen",
+    "latitude": 17.111388888,
+    "longitude": 43.248611111,
+    "population": 1
+  },
+  {
+    "id": 3291319,
+    "name": "'Aljabal",
+    "country": "Yemen",
+    "latitude": 16.1125,
+    "longitude": 43.662222222,
+    "population": 5
+  },
+  {
+    "id": 3247822,
+    "name": "'Alkam",
+    "country": "Yemen",
+    "latitude": 16.850833333,
+    "longitude": 44.246944444,
+    "population": 5
+  },
+  {
+    "id": 3309711,
+    "name": "'Almarqibah",
+    "country": "Yemen",
+    "latitude": 16.150833333,
+    "longitude": 43.673888888,
+    "population": 2
+  },
+  {
+    "id": 3390593,
+    "name": "'Alwanah",
+    "country": "Yemen",
+    "latitude": 16.921944444,
+    "longitude": 44.185,
+    "population": 14
+  },
+  {
+    "id": 3431082,
+    "name": "'Amad",
+    "country": "Yemen",
+    "latitude": 16.78,
+    "longitude": 43.431944444,
+    "population": 29
+  },
+  {
+    "id": 3392758,
+    "name": "'Amaqiyah",
+    "country": "Yemen",
+    "latitude": 16.746388888,
+    "longitude": 43.447777777,
+    "population": 10
+  },
+  {
+    "id": 3283327,
+    "name": "'Amarah",
+    "country": "Yemen",
+    "latitude": 16.170277777,
+    "longitude": 43.661944444,
+    "population": 1
+  },
+  {
+    "id": 3390545,
+    "name": "'Amarah",
+    "country": "Yemen",
+    "latitude": 16.835,
+    "longitude": 44.172777777,
+    "population": 4
+  },
+  {
+    "id": 3196021,
+    "name": "'Amishah",
+    "country": "Yemen",
+    "latitude": 16.201944444,
+    "longitude": 43.453611111,
+    "population": 2
+  },
+  {
+    "id": 3230536,
+    "name": "'Amizat Hulays",
+    "country": "Yemen",
+    "latitude": 16.215,
+    "longitude": 43.469166666,
+    "population": 10
+  },
+  {
+    "id": 3224385,
+    "name": "'Amran",
+    "country": "Yemen",
+    "latitude": 14.419166666,
+    "longitude": 45.277222222,
+    "population": 12
+  },
+  {
+    "id": 3232893,
+    "name": "'Amran",
+    "country": "Yemen",
+    "latitude": 17.083611111,
+    "longitude": 43.576944444,
+    "population": 16
+  },
+  {
+    "id": 3243046,
+    "name": "'Anbarah",
+    "country": "Yemen",
+    "latitude": 16.519166666,
+    "longitude": 44.016388888,
+    "population": 7
+  },
+  {
+    "id": 3409705,
+    "name": "'Anis",
+    "country": "Yemen",
+    "latitude": 13.425555555,
+    "longitude": 43.851111111,
+    "population": 1
+  },
+  {
+    "id": 3369012,
+    "name": "'Anmi",
+    "country": "Yemen",
+    "latitude": 16.673888888,
+    "longitude": 43.361111111,
+    "population": 2
+  },
+  {
+    "id": 3408969,
+    "name": "'Annah",
+    "country": "Yemen",
+    "latitude": 14.190277777,
+    "longitude": 45.496666666,
+    "population": 25
+  },
+  {
+    "id": 3410313,
+    "name": "'Aqabah",
+    "country": "Yemen",
+    "latitude": 13.470277777,
+    "longitude": 43.7825,
+    "population": 2
+  },
+  {
+    "id": 3276024,
+    "name": "'Aqabat Ath Thawr",
+    "country": "Yemen",
+    "latitude": 16.103333333,
+    "longitude": 43.7075,
+    "population": 2
+  },
+  {
+    "id": 3285234,
+    "name": "'Aqam Al Ghirab",
+    "country": "Yemen",
+    "latitude": 16.11,
+    "longitude": 43.442777777,
+    "population": 3
+  },
+  {
+    "id": 3406297,
+    "name": "'Aqam Ar Rajim",
+    "country": "Yemen",
+    "latitude": 16.140833333,
+    "longitude": 43.377777777,
+    "population": 54
+  },
+  {
+    "id": 3413944,
+    "name": "'Aqaris",
+    "country": "Yemen",
+    "latitude": 17.097222222,
+    "longitude": 43.408333333,
+    "population": 7
+  },
+  {
+    "id": 3364951,
+    "name": "'Aqil Wabrah",
+    "country": "Yemen",
+    "latitude": 17.383055555,
+    "longitude": 43.323888888,
+    "population": 4
+  },
+  {
+    "id": 3243007,
+    "name": "'Aqim Al Wa'ir",
+    "country": "Yemen",
+    "latitude": 16.188888888,
+    "longitude": 43.451388888,
+    "population": 2
+  },
+  {
+    "id": 3383510,
+    "name": "'Aqimat Ghazi",
+    "country": "Yemen",
+    "latitude": 13.091666666,
+    "longitude": 45.371111111,
+    "population": 18
+  },
+  {
+    "id": 3297103,
+    "name": "'Aqm Al Jazif",
+    "country": "Yemen",
+    "latitude": 16.02,
+    "longitude": 43.614444444,
+    "population": 26
+  },
+  {
+    "id": 3334269,
+    "name": "'Aqm Al Mawqir",
+    "country": "Yemen",
+    "latitude": 16.016111111,
+    "longitude": 43.614166666,
+    "population": 2
+  },
+  {
+    "id": 3395701,
+    "name": "'Aqm As Sawfi",
+    "country": "Yemen",
+    "latitude": 16.074444444,
+    "longitude": 43.578888888,
+    "population": 2
+  },
+  {
+    "id": 3427188,
+    "name": "'Aqmat Sihayl",
+    "country": "Yemen",
+    "latitude": 16.236944444,
+    "longitude": 43.225,
+    "population": 26
+  },
+  {
+    "id": 3252123,
+    "name": "'Arabat Al Ulya",
+    "country": "Yemen",
+    "latitude": 16.906388888,
+    "longitude": 43.266944444,
+    "population": 56
+  },
+  {
+    "id": 3246578,
+    "name": "'Arabat As Sufla",
+    "country": "Yemen",
+    "latitude": 16.9075,
+    "longitude": 43.266944444,
+    "population": 4
+  },
+  {
+    "id": 3250168,
+    "name": "'Arajah",
+    "country": "Yemen",
+    "latitude": 16.705,
+    "longitude": 43.294166666,
+    "population": 1
+  },
+  {
+    "id": 3397414,
+    "name": "'Arakibah",
+    "country": "Yemen",
+    "latitude": 13.481944444,
+    "longitude": 43.809722222,
+    "population": 2
+  },
+  {
+    "id": 3307097,
+    "name": "'Aram Al Mighsha",
+    "country": "Yemen",
+    "latitude": 17.095,
+    "longitude": 43.246111111,
+    "population": 3
+  },
+  {
+    "id": 3301236,
+    "name": "'Araq Dibbah",
+    "country": "Yemen",
+    "latitude": 16.670833333,
+    "longitude": 44.499166666,
+    "population": 6
+  },
+  {
+    "id": 3356991,
+    "name": "'Arar",
+    "country": "Yemen",
+    "latitude": 13.489166666,
+    "longitude": 43.858055555,
+    "population": 2
+  },
+  {
+    "id": 3194876,
+    "name": "'Arash",
+    "country": "Yemen",
+    "latitude": 16.848888888,
+    "longitude": 44.242777777,
+    "population": 11
+  },
+  {
+    "id": 3422422,
+    "name": "'Arash",
+    "country": "Yemen",
+    "latitude": 16.004722222,
+    "longitude": 43.601944444,
+    "population": 2
+  },
+  {
+    "id": 3265340,
+    "name": "'Arayah",
+    "country": "Yemen",
+    "latitude": 16.748055555,
+    "longitude": 43.408611111,
+    "population": 18
+  },
+  {
+    "id": 3438914,
+    "name": "'Arbayn",
+    "country": "Yemen",
+    "latitude": 16.680833333,
+    "longitude": 43.428611111,
+    "population": 1
+  },
+  {
+    "id": 3389672,
+    "name": "'Arijan Hasan",
+    "country": "Yemen",
+    "latitude": 16.166111111,
+    "longitude": 43.468611111,
+    "population": 2
+  },
+  {
+    "id": 3399055,
+    "name": "'Ariq Au Dali'",
+    "country": "Yemen",
+    "latitude": 16.185277777,
+    "longitude": 43.502777777,
+    "population": 6
+  },
+  {
+    "id": 3426510,
+    "name": "'Arish Maqbal",
+    "country": "Yemen",
+    "latitude": 16.355833333,
+    "longitude": 43.372222222,
+    "population": 2
+  },
+  {
+    "id": 3299440,
+    "name": "'Ariu Abu Rashid",
+    "country": "Yemen",
+    "latitude": 16.259722222,
+    "longitude": 43.291388888,
+    "population": 2
+  },
+  {
+    "id": 3381830,
+    "name": "'Arjash",
+    "country": "Yemen",
+    "latitude": 16.371111111,
+    "longitude": 43.450555555,
+    "population": 4
+  },
+  {
+    "id": 3197036,
+    "name": "'Arrabah",
+    "country": "Yemen",
+    "latitude": 16.7675,
+    "longitude": 43.743888888,
+    "population": 4
+  },
+  {
+    "id": 3275458,
+    "name": "'Arshan",
+    "country": "Yemen",
+    "latitude": 16.023888888,
+    "longitude": 43.5675,
+    "population": 20
+  },
+  {
+    "id": 3405429,
+    "name": "'Arthub Al Malah",
+    "country": "Yemen",
+    "latitude": 16.325555555,
+    "longitude": 43.373888888,
+    "population": 12
+  },
+  {
+    "id": 3382821,
+    "name": "'Arthub Al Qararah",
+    "country": "Yemen",
+    "latitude": 16.327777777,
+    "longitude": 43.3775,
+    "population": 17
+  },
+  {
+    "id": 3361039,
+    "name": "'Arwan",
+    "country": "Yemen",
+    "latitude": 16.015277777,
+    "longitude": 43.617222222,
+    "population": 6
+  },
+  {
+    "id": 3587429,
+    "name": "'Arwan",
+    "country": "Yemen",
+    "latitude": 16.859722222,
+    "longitude": 43.368888888,
+    "population": 2
+  },
+  {
+    "id": 3427153,
+    "name": "'Asatinah",
+    "country": "Yemen",
+    "latitude": 14.786388888,
+    "longitude": 45.414166666,
+    "population": 6
+  },
+  {
+    "id": 3267718,
+    "name": "'Ashan",
+    "country": "Yemen",
+    "latitude": 16.606666666,
+    "longitude": 44.393333333,
+    "population": 7
+  },
+  {
+    "id": 3229195,
+    "name": "'Ashar",
+    "country": "Yemen",
+    "latitude": 16.63,
+    "longitude": 44.184166666,
+    "population": 53
+  },
+  {
+    "id": 3375701,
+    "name": "'Ashar",
+    "country": "Yemen",
+    "latitude": 15.455555555,
+    "longitude": 44.1275,
+    "population": 81
+  },
+  {
+    "id": 3200440,
+    "name": "'Asharah",
+    "country": "Yemen",
+    "latitude": 14.923888888,
+    "longitude": 45.427777777,
+    "population": 1
+  },
+  {
+    "id": 3407604,
+    "name": "'Ashari",
+    "country": "Yemen",
+    "latitude": 16.946944444,
+    "longitude": 43.673611111,
+    "population": 67
+  },
+  {
+    "id": 3250375,
+    "name": "'Ashat At Taq'ah",
+    "country": "Yemen",
+    "latitude": 16.087222222,
+    "longitude": 43.355833333,
+    "population": 6
+  },
+  {
+    "id": 3362690,
+    "name": "'Ashirah",
+    "country": "Yemen",
+    "latitude": 14.855,
+    "longitude": 45.187777777,
+    "population": 3
+  },
+  {
+    "id": 3314414,
+    "name": "'Ashshat Al 'Alman",
+    "country": "Yemen",
+    "latitude": 17.041111111,
+    "longitude": 44.123611111,
+    "population": 4
+  },
+  {
+    "id": 3401324,
+    "name": "'Ashshat Al Birin",
+    "country": "Yemen",
+    "latitude": 16.653611111,
+    "longitude": 43.188333333,
+    "population": 7
+  },
+  {
+    "id": 3327531,
+    "name": "'Ashshat As Sawdin",
+    "country": "Yemen",
+    "latitude": 16.582777777,
+    "longitude": 43.284722222,
+    "population": 2
+  }
+]
