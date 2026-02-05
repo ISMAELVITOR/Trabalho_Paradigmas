@@ -9,21 +9,22 @@ const clusterContainer = document.getElementById("clusterContainer");
 const clusterControls = document.getElementById("clusterControls");
 
 let citiesData = null;
-let kmeansWorker = null;
 let running = false;
+let workers = [];
+let cancelRequested = false;
 
-// -- util: carregar JSON via fetch (arquivo padrão no servidor)
-async function loadDefault(path = "cidades-100.json") {
-  setStatus("Carregando arquivo padrão...");
+// -- util: carregar JSON via fetch (arquivo padrao no servidor)
+async function loadDefault(path = "cidades-9960.json") {
+  setStatus("Carregando arquivo padrao...");
   try {
     const res = await fetch(path);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
     citiesData = Array.isArray(json) ? json : (json.data || json);
-    setStatus(`Arquivo padrão carregado: ${citiesData.length} cidades`);
+    setStatus(`Arquivo padrao carregado: ${citiesData.length} cidades`);
     return citiesData;
   } catch (err) {
-    setStatus(`Erro ao carregar arquivo padrão: ${err.message || err}`);
+    setStatus(`Erro ao carregar arquivo padrao: ${err.message || err}`);
     throw err;
   }
 }
@@ -72,13 +73,13 @@ function renderClusters(clusters) {
     const div = document.createElement("div");
     div.className = "cluster";
     const title = document.createElement("h3");
-    title.textContent = `Cluster ${i+1} — ${cluster.length} cidades`;
+    title.textContent = `Cluster ${i + 1} - ${cluster.length} cidades`;
     div.appendChild(title);
 
     const ul = document.createElement("ul");
     cluster.forEach(c => {
       const li = document.createElement("li");
-      li.textContent = `${c.name} — ${c.country} (pop: ${c.population ?? "?"})`;
+      li.textContent = `${c.name} - ${c.country} (pop: ${c.population ?? "?"})`;
       ul.appendChild(li);
     });
 
@@ -87,52 +88,231 @@ function renderClusters(clusters) {
   });
 }
 
-// Start worker and run kmeans; returns promise resolved with clusters
-function runKMeansInWorker(cities, k) {
-  return new Promise((resolve, reject) => {
-    if (running) return reject(new Error("Já está executando"));
-    kmeansWorker = new Worker("kmeansWorker.js");
+function logSafe(x) {
+  if (x == null || isNaN(Number(x))) return 0;
+  return Math.log(Number(x) + 1);
+}
 
-    kmeansWorker.onmessage = (ev) => {
+function normalizePoints(points) {
+  const n = points.length;
+  const lats = points.map(p => Number(p.latitude) || 0);
+  const lons = points.map(p => Number(p.longitude) || 0);
+  const pops = points.map(p => logSafe(p.population || 0));
+
+  const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+  const minLon = Math.min(...lons), maxLon = Math.max(...lons);
+  const minPop = Math.min(...pops), maxPop = Math.max(...pops);
+
+  const rangeLat = (maxLat - minLat) || 1;
+  const rangeLon = (maxLon - minLon) || 1;
+  const rangePop = (maxPop - minPop) || 1;
+
+  const arr = points.map((p, i) => {
+    const lat = (lats[i] - minLat) / rangeLat;
+    const lon = (lons[i] - minLon) / rangeLon;
+    const pop = (pops[i] - minPop) / rangePop;
+    return { orig: p, vec: [lat, lon, pop] };
+  });
+
+  return { arr };
+}
+
+function randomIndices(n, k) {
+  const idx = new Set();
+  while (idx.size < Math.min(k, n)) {
+    idx.add(Math.floor(Math.random() * n));
+  }
+  return Array.from(idx);
+}
+
+function splitIntoChunks(arr, parts) {
+  const out = [];
+  const size = Math.ceil(arr.length / parts);
+  for (let i = 0; i < parts; i++) {
+    const start = i * size;
+    const end = Math.min(arr.length, start + size);
+    if (start >= end) break;
+    out.push(arr.slice(start, end));
+  }
+  return out;
+}
+
+function terminateWorkers() {
+  workers.forEach(w => w.terminate());
+  workers = [];
+}
+
+function createWorkers(count) {
+  terminateWorkers();
+  workers = Array.from({ length: count }, () => new Worker("kmeansWorker.js"));
+  return workers;
+}
+
+function waitForReady(w, id) {
+  return new Promise((resolve, reject) => {
+    const onMessage = (ev) => {
       const msg = ev.data;
-      if (msg.type === "progress") {
-        setStatus(`Progresso: ${msg.value}`);
-      } else if (msg.type === "done") {
-        running = false;
-        stopBtn.disabled = true;
-        runBtn.disabled = false;
-        setStatus(`K-means concluído. Clusters: ${msg.clusters.length}`);
-        resolve(msg.clusters);
-        kmeansWorker.terminate();
-        kmeansWorker = null;
-      } else if (msg.type === "error") {
-        running = false;
-        stopBtn.disabled = true;
-        runBtn.disabled = false;
-        setStatus(`Erro: ${msg.error}`);
-        reject(new Error(msg.error));
-        kmeansWorker.terminate();
-        kmeansWorker = null;
+      if (msg && msg.type === "error") {
+        w.removeEventListener("message", onMessage);
+        reject(new Error(msg.error || "Worker error"));
+        return;
+      }
+      if (msg && msg.type === "ready" && msg.id === id) {
+        w.removeEventListener("message", onMessage);
+        resolve();
       }
     };
-
-    kmeansWorker.onerror = (e) => {
-      running = false;
-      stopBtn.disabled = true;
-      runBtn.disabled = false;
-      setStatus(`Worker error: ${e.message || e}`);
+    const onError = (e) => {
+      w.removeEventListener("error", onError);
       reject(e);
-      kmeansWorker.terminate();
-      kmeansWorker = null;
     };
-
-    // post message: cities array and k
-    running = true;
-    stopBtn.disabled = false;
-    runBtn.disabled = true;
-    setStatus("Enviando dados ao worker...");
-    kmeansWorker.postMessage({ type: "start", cities, k });
+    w.addEventListener("message", onMessage);
+    w.addEventListener("error", onError);
   });
+}
+
+function stepWorker(w, id, iter, centroids) {
+  return new Promise((resolve, reject) => {
+    const onMessage = (ev) => {
+      const msg = ev.data;
+      if (msg && msg.type === "error") {
+        w.removeEventListener("message", onMessage);
+        reject(new Error(msg.error || "Worker error"));
+        return;
+      }
+      if (msg && msg.type === "partial" && msg.id === id && msg.iter === iter) {
+        w.removeEventListener("message", onMessage);
+        resolve(msg);
+      }
+    };
+    const onError = (e) => {
+      w.removeEventListener("error", onError);
+      reject(e);
+    };
+    w.addEventListener("message", onMessage);
+    w.addEventListener("error", onError);
+    w.postMessage({ type: "step", id, iter, centroids });
+  });
+}
+
+function collectAssignments(w, id) {
+  return new Promise((resolve, reject) => {
+    const onMessage = (ev) => {
+      const msg = ev.data;
+      if (msg && msg.type === "error") {
+        w.removeEventListener("message", onMessage);
+        reject(new Error(msg.error || "Worker error"));
+        return;
+      }
+      if (msg && msg.type === "final" && msg.id === id) {
+        w.removeEventListener("message", onMessage);
+        resolve(msg);
+      }
+    };
+    const onError = (e) => {
+      w.removeEventListener("error", onError);
+      reject(e);
+    };
+    w.addEventListener("message", onMessage);
+    w.addEventListener("error", onError);
+    w.postMessage({ type: "collect", id });
+  });
+}
+
+async function runKMeansParallel(cities, k, opts = {}) {
+  if (running) throw new Error("Ja esta executando");
+
+  const maxIter = opts.maxIter || 100;
+  const workerCount = Math.max(2, Math.min(opts.workers || (navigator.hardwareConcurrency || 4), 8));
+
+  cancelRequested = false;
+  running = true;
+
+  try {
+    setStatus("Normalizando dados...");
+    const { arr } = normalizePoints(cities);
+    const n = arr.length;
+
+    const indexed = arr.map((p, i) => ({ vec: p.vec, index: i }));
+    const chunks = splitIntoChunks(indexed, workerCount);
+
+    const ws = createWorkers(chunks.length);
+
+    const readyPromises = ws.map((w, i) => {
+      w.postMessage({ type: "init", id: i, k, points: chunks[i] });
+      return waitForReady(w, i);
+    });
+
+    await Promise.all(readyPromises);
+
+    const initIdx = randomIndices(n, k);
+    let centroids = initIdx.map(i => arr[i].vec.slice());
+
+    let iter = 0;
+    let changed = true;
+
+    while (iter < maxIter && changed && !cancelRequested) {
+      iter++;
+
+      const partials = await Promise.all(ws.map((w, i) => stepWorker(w, i, iter, centroids)));
+
+      const sums = Array.from({ length: k }, () => [0, 0, 0]);
+      const counts = new Array(k).fill(0);
+      changed = false;
+
+      for (const part of partials) {
+        changed = changed || part.changed;
+        for (let c = 0; c < k; c++) {
+          sums[c][0] += part.sums[c][0];
+          sums[c][1] += part.sums[c][1];
+          sums[c][2] += part.sums[c][2];
+          counts[c] += part.counts[c];
+        }
+      }
+
+      for (let c = 0; c < k; c++) {
+        if (counts[c] === 0) {
+          centroids[c] = arr[Math.floor(Math.random() * n)].vec.slice();
+        } else {
+          centroids[c] = [
+            sums[c][0] / counts[c],
+            sums[c][1] / counts[c],
+            sums[c][2] / counts[c]
+          ];
+        }
+      }
+
+      if (iter % 5 === 0) {
+        setStatus(`Iteracao ${iter} - mudou = ${changed}`);
+      }
+    }
+
+    if (cancelRequested) {
+      throw new Error("Execucao cancelada");
+    }
+
+    setStatus(`Concluido em ${iter} iteracoes. Montando clusters...`);
+
+    const finalParts = await Promise.all(ws.map((w, i) => collectAssignments(w, i)));
+    const assignments = new Array(n).fill(-1);
+
+    for (const part of finalParts) {
+      for (let i = 0; i < part.indices.length; i++) {
+        assignments[part.indices[i]] = part.assignments[i];
+      }
+    }
+
+    const clusters = Array.from({ length: k }, () => []);
+    for (let i = 0; i < n; i++) {
+      const a = assignments[i];
+      if (a >= 0) clusters[a].push(arr[i].orig);
+    }
+
+    return clusters;
+  } finally {
+    terminateWorkers();
+    running = false;
+  }
 }
 
 runBtn.addEventListener("click", async () => {
@@ -142,27 +322,38 @@ runBtn.addEventListener("click", async () => {
     return;
   }
   if (citiesData.length < k) {
-    setStatus("O número de cidades é menor que K. Reduza K.");
+    setStatus("O numero de cidades e menor que K. Reduza K.");
     return;
   }
 
   try {
-    setStatus("Inicializando K-means...");
-    const clusters = await runKMeansInWorker(citiesData, k);
+    stopBtn.disabled = false;
+    runBtn.disabled = true;
+    setStatus("Inicializando K-means paralelo...");
+    const clusters = await runKMeansParallel(citiesData, k);
+    setStatus(`K-means concluido. Clusters: ${clusters.length}`);
     renderClusters(clusters);
   } catch (err) {
     console.error(err);
     setStatus(`Erro: ${err.message || err}`);
-  }
-});
-
-stopBtn.addEventListener("click", () => {
-  if (kmeansWorker) {
-    kmeansWorker.terminate();
-    kmeansWorker = null;
-    running = false;
-    setStatus("Execução interrompida.");
+  } finally {
     stopBtn.disabled = true;
     runBtn.disabled = false;
   }
 });
+
+stopBtn.addEventListener("click", () => {
+  if (running) {
+    cancelRequested = true;
+    terminateWorkers();
+    running = false;
+    setStatus("Execucao interrompida.");
+    stopBtn.disabled = true;
+    runBtn.disabled = false;
+  }
+});
+
+
+
+
+
