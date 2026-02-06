@@ -1,5 +1,6 @@
 ﻿// main.js
 import { createGeoDbClient } from "./api.js";
+import { RAPID_API_KEY, RAPID_API_HOST, BASE_URL } from "./config.js";
 
 const api = createGeoDbClient();
 
@@ -97,7 +98,7 @@ const renderCities = (state, onAdd) => {
 
   if (!Array.isArray(cities) || cities.length === 0) {
     const li = document.createElement("li");
-    li.textContent = "Nenhuma cidade nesta página.";
+    li.textContent = "Nenhuma cidade nesta pagina.";
     list.appendChild(li);
     return;
   }
@@ -108,7 +109,7 @@ const renderCities = (state, onAdd) => {
     const li = document.createElement("li");
 
     const txt = document.createElement("span");
-    txt.textContent = `${city.name || city.city} — ${city.country || city.countryCode || ""}`;
+    txt.textContent = `${city.name || city.city} ? ${city.country || city.countryCode || ""}`;
 
     const addBtn = document.createElement("button");
     addBtn.textContent = "Adicionar";
@@ -142,8 +143,8 @@ const renderSelected = (state, onRemove) => {
     : Math.min(selectedPage, totalPages - 1);
 
   const pageLabel = totalPages === 0
-    ? "Página 0 de 0"
-    : `Página ${safePage + 1} de ${totalPages}`;
+    ? "Pagina 0 de 0"
+    : `Pagina ${safePage + 1} de ${totalPages}`;
 
   el.selectedPageInfo.textContent = pageLabel;
   el.selectedPrevBtn.disabled = totalPages === 0 || safePage <= 0;
@@ -163,7 +164,7 @@ const renderSelected = (state, onRemove) => {
 
   visible.forEach((city) => {
     const li = document.createElement("li");
-    li.textContent = `${city.name} — ${city.country}`;
+    li.textContent = `${city.name} ? ${city.country}`;
 
     const rm = document.createElement("button");
     rm.textContent = "Remover";
@@ -177,7 +178,7 @@ const renderSelected = (state, onRemove) => {
 };
 
 const store = createStore(initialState, (state) => {
-  el.pageInfo.textContent = `Página ${state.page + 1}`;
+  el.pageInfo.textContent = `Pagina ${state.page + 1}`;
 
   renderCities(state, (city) => {
     const slim = toSlimCity(city);
@@ -189,7 +190,7 @@ const store = createStore(initialState, (state) => {
   });
 });
 
-/* ---------------- Paginação / carregamento de página ---------------- */
+/* ---------------- Paginacao / carregamento de pagina ---------------- */
 
 const loadPage = async () => {
   store.setState((s) => ({ ...s, loading: true, error: null }));
@@ -248,101 +249,130 @@ el.clearSelectedBtn.addEventListener("click", () => {
   store.setState((s) => ({ ...s, selected: [], selectedPage: 0 }));
 });
 
-/* ---------------- Carga massiva (10k) ----------------
-   Estratégia (respeitando plano gratuito):
-   - porRequestLimit: 10 (máx útil no plano gratuito)
-   - perRequestDelayMs: 1100 ms (≈ 1 req/s) — ajuste aqui se tiver limite diferente
-   - pagesNeeded = ceil(target / perRequestLimit)
-   - Faz fetch sequencial de cada offset, com delay entre requisições
-   - Implementa retry/backoff em caso de 429 ou falha temporária
-   - Acumula lista 'allCities' (slim) em memória
-   - Ao final, salva arquivo JSON para uso posterior
+/* ---------------- Carga massiva paralela (10k) ----------------
+   Estrategia simples:
+   - Divide offsets entre N workers (round-robin)
+   - Cada worker faz fetch com delay (rate limit)
+   - Main agrega resultados em memoria e salva JSON
 */
 
 let bulkLoadController = { cancelled: false };
+let bulkWorkers = [];
 
-function sleep(ms) {
-  return new Promise((res) => setTimeout(res, ms));
+function resetBulkWorkers() {
+  bulkWorkers.forEach((w) => w.terminate());
+  bulkWorkers = [];
 }
 
-async function fetchWithRetries(offset, perRequestLimit, maxAttempts = 6, baseDelay = 800) {
-  let attempt = 0;
-  while (attempt < maxAttempts && !bulkLoadController.cancelled) {
-    try {
-      const res = await api.findCities({ offset, limit: perRequestLimit, sort: "name" });
-      return res?.data ?? [];
-    } catch (err) {
-      attempt++;
-      // se for 429 ou status undefined (fetch network) aplicamos backoff e tentamos
-      const is429 = err && (String(err).includes("429") || (err.status === 429));
-      const wait = baseDelay * Math.pow(2, attempt - 1);
-      if (!is429 && attempt >= maxAttempts) {
-        // erro persistente não-429 -> lança após maxAttempts
-        throw err;
-      }
-      // aguarda backoff
-      await sleep(wait);
-    }
+function createOffsets(target, perRequestLimit) {
+  const pagesNeeded = Math.ceil(target / perRequestLimit);
+  const offsets = [];
+  for (let i = 0; i < pagesNeeded; i++) offsets.push(i * perRequestLimit);
+  return offsets;
+}
+
+function splitOffsetsRoundRobin(offsets, workerCount) {
+  const buckets = Array.from({ length: workerCount }, () => []);
+  for (let i = 0; i < offsets.length; i++) {
+    buckets[i % workerCount].push(offsets[i]);
   }
-  // se cancelado
-  return [];
+  return buckets;
 }
 
-async function startBulkLoad({ target = 10000, perRequestLimit = 10, perRequestDelayMs = 1100 } = {}) {
-  // reset controller
+async function startBulkLoadParallel({
+  target = 10000,
+  perRequestLimit = 10,
+  perRequestDelayMs = 1200,
+  workerCount = 3
+} = {}) {
   bulkLoadController.cancelled = false;
+  resetBulkWorkers();
 
-  // UI
   el.loadAllBtn.disabled = true;
   el.cancelLoadBtn.style.display = "inline-block";
   el.progress.textContent = `0 / ${target}`;
 
-  const pagesNeeded = Math.ceil(target / perRequestLimit);
-  const offsets = [];
-  for (let i = 0; i < pagesNeeded; i++) offsets.push(i * perRequestLimit);
+  const offsets = createOffsets(target, perRequestLimit);
+  const buckets = splitOffsetsRoundRobin(offsets, workerCount);
+
+  // para respeitar limite global, aumentamos o delay por worker
+  const perWorkerDelayMs = perRequestDelayMs * workerCount;
 
   const allCities = [];
+  let doneWorkers = 0;
 
   store.setState((s) => ({ ...s, loading: true }));
 
-  for (let i = 0; i < offsets.length; i++) {
-    if (bulkLoadController.cancelled) break;
+  return new Promise((resolve, reject) => {
+    bulkWorkers = buckets.map((bucket, i) => {
+      const w = new Worker("fetchWorker.js");
 
-    const offset = offsets[i];
-    try {
-      // tenta buscar com retries/backoff
-      const data = await fetchWithRetries(offset, perRequestLimit);
-      // transforma e junta em memória (slim)
-      const slims = (data || []).map(toSlimCity);
-      allCities.push(...slims);
+      w.onmessage = (ev) => {
+        const msg = ev.data;
+        if (!msg) return;
 
-      // atualiza progresso na UI (sem usar store para não re-renderizar listas)
-      el.progress.textContent = `${Math.min(allCities.length, target)} / ${target} (pág ${i + 1}/${pagesNeeded})`;
-    } catch (err) {
-      console.error(`Erro irreversível na página offset ${offset}:`, err);
-      // registra e segue: não interrompemos totalmente, apenas continuamos
-    }
+        if (msg.type === "page") {
+          const slims = (msg.data || []).map(toSlimCity);
+          allCities.push(...slims);
+          const count = Math.min(allCities.length, target);
+          el.progress.textContent = `${count} / ${target}`;
+          return;
+        }
 
-    // delay entre requisições para respeitar limite
-    // se cancelado enquanto dorme, sai no próximo loop
-    await sleep(perRequestDelayMs);
-  }
+        if (msg.type === "done") {
+          doneWorkers++;
+          if (doneWorkers === buckets.length) {
+            finalizeBulkLoad(allCities, target).then(resolve).catch(reject);
+          }
+          return;
+        }
 
-  // fim da coleta
+        if (msg.type === "error") {
+          console.error("Worker erro:", msg.error);
+          doneWorkers++;
+          if (doneWorkers === buckets.length) {
+            finalizeBulkLoad(allCities, target).then(resolve).catch(reject);
+          }
+        }
+      };
+
+      w.onerror = (e) => {
+        console.error("Worker error:", e);
+        doneWorkers++;
+        if (doneWorkers === buckets.length) {
+          finalizeBulkLoad(allCities, target).then(resolve).catch(reject);
+        }
+      };
+
+      w.postMessage({
+        type: "start",
+        id: i,
+        baseUrl: BASE_URL,
+        host: RAPID_API_HOST,
+        apiKey: RAPID_API_KEY,
+        perRequestLimit,
+        perRequestDelayMs: perWorkerDelayMs,
+        initialDelayMs: i * perRequestDelayMs,
+        offsets: bucket
+      });
+
+      return w;
+    });
+  });
+}
+
+async function finalizeBulkLoad(allCities, target) {
   store.setState((s) => ({ ...s, loading: false }));
   el.cancelLoadBtn.style.display = "none";
   el.loadAllBtn.disabled = false;
 
   if (bulkLoadController.cancelled) {
     el.progress.textContent = `Carga cancelada (${allCities.length} cidades coletadas).`;
-    console.log("Carga cancelada pelo usuário. coletadas:", allCities.length);
     return allCities;
   }
 
-  // garante tamanho exato máximo
   const finalCities = allCities.slice(0, target);
 
-  // salva em arquivo JSON
   try {
     const blob = new Blob([JSON.stringify(finalCities, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -352,8 +382,7 @@ async function startBulkLoad({ target = 10000, perRequestLimit = 10, perRequestD
     a.click();
     URL.revokeObjectURL(url);
 
-    el.progress.textContent = `Concluído: ${finalCities.length} cidades salvas.`;
-    console.log("Carga completa. total:", finalCities.length);
+    el.progress.textContent = `Concluido: ${finalCities.length} cidades salvas.`;
   } catch (err) {
     console.error("Erro ao salvar arquivo:", err);
     el.progress.textContent = `Erro ao salvar arquivo: ${err?.message || err}`;
@@ -364,6 +393,7 @@ async function startBulkLoad({ target = 10000, perRequestLimit = 10, perRequestD
 
 function cancelBulkLoad() {
   bulkLoadController.cancelled = true;
+  resetBulkWorkers();
   el.cancelLoadBtn.style.display = "none";
   el.loadAllBtn.disabled = false;
   el.progress.textContent = `Cancelando...`;
@@ -371,8 +401,8 @@ function cancelBulkLoad() {
 
 /* ---------- Handlers do UI para carga massiva ---------- */
 el.loadAllBtn.addEventListener("click", () => {
-  // parâmetros: target 10000, perRequestLimit 10, delay 1100ms
-  startBulkLoad({ target: 10000, perRequestLimit: 10, perRequestDelayMs: 1300 });
+  // parametros simples para respeitar limite
+  startBulkLoadParallel({ target: 10000, perRequestLimit: 10, perRequestDelayMs: 1200, workerCount: 3 });
 });
 
 el.cancelLoadBtn.addEventListener("click", () => {
@@ -381,3 +411,5 @@ el.cancelLoadBtn.addEventListener("click", () => {
 
 /* ---------- inicial ---------- */
 loadPage();
+
+
