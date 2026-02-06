@@ -21,6 +21,8 @@ const el = {
   progress: document.getElementById("progress")
 };
 
+let nextCooldown = false;
+
 const initialState = {
   page: 0,
   limit: 10,
@@ -250,8 +252,15 @@ const loadPage = async () => {
 };
 
 el.nextBtn.addEventListener("click", () => {
+  if (nextCooldown) return;
+  nextCooldown = true;
+  el.nextBtn.disabled = true;
   store.setState((s) => ({ ...s, page: s.page + 1 }));
   loadPage();
+  setTimeout(() => {
+    nextCooldown = false;
+    el.nextBtn.disabled = false;
+  }, 1300);
 });
 
 el.prevBtn.addEventListener("click", () => {
