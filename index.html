@@ -1,10 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <title>GeoDB Explorer — Seleção simples</title>
+  <title>GeoDB Explorer - Etapas 1 e 2</title>
 
-  <!-- Fonte Google -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -16,57 +15,108 @@
 
   <header class="header">
     <div class="header-inner">
-      <h1 class="title">🌍 GeoDB Explorer</h1>
-      <p class="subtitle">Explorador de cidades — seleção temporária</p>
+      <h1 class="title">GeoDB Explorer</h1>
+      <p class="subtitle">Explorador de cidades - selecao e agrupamento</p>
     </div>
   </header>
 
-  <!-- 🔽 Navegação entre etapas -->
   <nav class="top-nav">
-    <a class="active" href="index.html">Etapa 1</a>
-    <a href="etapa2.html">Etapa 2</a>
+    <a class="active" href="#" data-view="etapa1">Etapa 1</a>
+    <a href="#" data-view="etapa2">Etapa 2</a>
   </nav>
 
-  <section class="pagination">
-    <button id="prevBtn" class="btn">⬅ Anterior</button>
-    <span id="pageInfo" class="meta"></span>
-    <button id="nextBtn" class="btn">Próxima ➡</button>
+  <section id="view-etapa1">
+    <section class="pagination">
+      <button id="prevBtn" class="btn">Anterior</button>
+      <span id="pageInfo" class="meta"></span>
+      <button id="nextBtn" class="btn">Proxima</button>
 
-    <button id="loadAllBtn" class="btn subtle">Carregar 10.000</button>
-    <button id="cancelLoadBtn" class="btn subtle" style="display:none;">Cancelar</button>
-    <span id="progress" class="meta"></span>
+      <button id="loadAllBtn" class="btn subtle">Carregar 10000</button>
+      <button id="cancelLoadBtn" class="btn subtle" style="display:none;">Cancelar</button>
+      <span id="progress" class="meta"></span>
+    </section>
+
+    <main class="container">
+      <section class="panel" id="apiPanel">
+        <h2>Resultados da API</h2>
+        <ul id="citiesList" class="list">
+          <li class="placeholder">Carregando...</li>
+        </ul>
+      </section>
+
+      <section class="panel" id="selectedPanel">
+        <h2>Cidades Selecionadas</h2>
+        <ul id="selectedList" class="list">
+          <li class="placeholder">Nenhuma cidade selecionada.</li>
+        </ul>
+
+        <div class="panel-pagination">
+          <button id="selectedPrevBtn" class="btn small">Anterior</button>
+          <span id="selectedPageInfo" class="meta"></span>
+          <button id="selectedNextBtn" class="btn small">Proxima</button>
+        </div>
+
+        <div class="panel-footer">
+          <button id="clearSelectedBtn" class="btn danger">
+            Limpar selecionadas
+          </button>
+        </div>
+      </section>
+    </main>
   </section>
 
-  <main class="container">
+  <section id="view-etapa2" class="hidden">
+    <main class="container container-column">
+      <section class="panel controls-panel">
+        <div class="controls-row">
+          <button id="loadDefaultBtn" class="btn">
+            Carregar arquivo padrao
+          </button>
 
-    <section class="panel" id="apiPanel">
-      <h2>Resultados da API</h2>
-      <ul id="citiesList" class="list">
-        <li class="placeholder">Carregando...</li>
-      </ul>
-    </section>
+          <input
+            id="fileInput"
+            type="file"
+            accept=".json"
+            style="display:none;"
+          />
+        </div>
 
-    <section class="panel" id="selectedPanel">
-      <h2>Cidades Selecionadas</h2>
-      <ul id="selectedList" class="list">
-        <li class="placeholder">Nenhuma cidade selecionada.</li>
-      </ul>
+        <div class="controls-row">
+          <div class="input-group">
+            <label for="kInput" class="input-label">Numero de Clusters (K)</label>
+            <input
+              id="kInput"
+              type="number"
+              value="5"
+              min="1"
+              max="20"
+              class="input-number"
+            />
+          </div>
 
-      <div class="panel-pagination">
-        <button id="selectedPrevBtn" class="btn small">⬅ Anterior</button>
-        <span id="selectedPageInfo" class="meta"></span>
-        <button id="selectedNextBtn" class="btn small">Próxima ➡</button>
-      </div>
+          <button id="runBtn" class="btn primary">
+            Executar K-means
+          </button>
 
-      <div class="panel-footer">
-        <button id="clearSelectedBtn" class="btn danger">
-          Limpar selecionadas
-        </button>
-      </div>
-    </section>
+          <button id="stopBtn" class="btn subtle" disabled>
+            Parar
+          </button>
 
-  </main>
+          <span id="status" class="meta status-text"></span>
+        </div>
+      </section>
+
+      <section id="clusterControls" class="clusters-info" style="display:none;">
+        <p class="meta">
+          Clusters gerados - cada grupo e exibido em um card separado.
+        </p>
+      </section>
+
+      <section id="clusterContainer" class="clusters-container"></section>
+    </main>
+  </section>
 
   <script type="module" src="main.js"></script>
+  <script type="module" src="kmeans.js"></script>
 </body>
 </html>

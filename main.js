@@ -199,6 +199,33 @@ const store = createStore(initialState, (state) => {
   });
 });
 
+/* ---------------- Navegacao SPA (Etapa 1/2) ---------------- */
+const viewButtons = Array.from(document.querySelectorAll(".top-nav [data-view]"));
+const views = {
+  etapa1: document.getElementById("view-etapa1"),
+  etapa2: document.getElementById("view-etapa2")
+};
+
+function setActiveView(name) {
+  Object.entries(views).forEach(([key, node]) => {
+    if (!node) return;
+    node.classList.toggle("hidden", key !== name);
+  });
+  viewButtons.forEach((btn) => {
+    const isActive = btn.dataset.view === name;
+    btn.classList.toggle("active", isActive);
+  });
+}
+
+viewButtons.forEach((btn) => {
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    setActiveView(btn.dataset.view);
+  });
+});
+
+setActiveView("etapa1");
+
 /* ---------------- Paginacao / carregamento de pagina ---------------- */
 
 const loadPage = async () => {
@@ -420,4 +447,3 @@ el.cancelLoadBtn.addEventListener("click", () => {
 
 /* ---------- inicial ---------- */
 loadPage();
-
