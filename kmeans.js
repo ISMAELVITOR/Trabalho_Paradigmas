@@ -12,6 +12,7 @@ let citiesData = null;
 let running = false;
 let workers = [];
 let cancelRequested = false;
+let sharedAssignments = null;
 
 // -- util: carregar JSON via fetch (arquivo padrao no servidor)
 async function loadDefault(path = "cidades-9960.json") {
@@ -125,18 +126,6 @@ function randomIndices(n, k) {
   return Array.from(idx);
 }
 
-function splitIntoChunks(arr, parts) {
-  const out = [];
-  const size = Math.ceil(arr.length / parts);
-  for (let i = 0; i < parts; i++) {
-    const start = i * size;
-    const end = Math.min(arr.length, start + size);
-    if (start >= end) break;
-    out.push(arr.slice(start, end));
-  }
-  return out;
-}
-
 function terminateWorkers() {
   workers.forEach(w => w.terminate());
   workers = [];
@@ -195,28 +184,26 @@ function stepWorker(w, id, iter, centroids) {
   });
 }
 
-function collectAssignments(w, id) {
-  return new Promise((resolve, reject) => {
-    const onMessage = (ev) => {
-      const msg = ev.data;
-      if (msg && msg.type === "error") {
-        w.removeEventListener("message", onMessage);
-        reject(new Error(msg.error || "Worker error"));
-        return;
-      }
-      if (msg && msg.type === "final" && msg.id === id) {
-        w.removeEventListener("message", onMessage);
-        resolve(msg);
-      }
-    };
-    const onError = (e) => {
-      w.removeEventListener("error", onError);
-      reject(e);
-    };
-    w.addEventListener("message", onMessage);
-    w.addEventListener("error", onError);
-    w.postMessage({ type: "collect", id });
-  });
+function buildSharedPoints(arr) {
+  if (typeof SharedArrayBuffer === "undefined") {
+    throw new Error("SharedArrayBuffer indisponivel. Rode em servidor com cross-origin isolation.");
+  }
+  const n = arr.length;
+  const pointsBuffer = new SharedArrayBuffer(Float64Array.BYTES_PER_ELEMENT * n * 3);
+  const pointsView = new Float64Array(pointsBuffer);
+  for (let i = 0; i < n; i++) {
+    const base = i * 3;
+    const v = arr[i].vec;
+    pointsView[base] = v[0];
+    pointsView[base + 1] = v[1];
+    pointsView[base + 2] = v[2];
+  }
+
+  const assignmentsBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * n);
+  const assignmentsView = new Int32Array(assignmentsBuffer);
+  assignmentsView.fill(-1);
+
+  return { pointsBuffer, assignmentsBuffer, assignmentsView };
 }
 
 async function runKMeansParallel(cities, k, opts = {}) {
@@ -233,13 +220,28 @@ async function runKMeansParallel(cities, k, opts = {}) {
     const { arr } = normalizePoints(cities);
     const n = arr.length;
 
-    const indexed = arr.map((p, i) => ({ vec: p.vec, index: i }));
-    const chunks = splitIntoChunks(indexed, workerCount);
+    const { pointsBuffer, assignmentsBuffer, assignmentsView } = buildSharedPoints(arr);
+    sharedAssignments = assignmentsView;
 
-    const ws = createWorkers(chunks.length);
+    const chunkSize = Math.ceil(n / workerCount);
+    const ranges = Array.from({ length: workerCount }, (_, i) => {
+      const start = i * chunkSize;
+      const end = Math.min(n, start + chunkSize);
+      return { start, end };
+    }).filter(r => r.start < r.end);
+
+    const ws = createWorkers(ranges.length);
 
     const readyPromises = ws.map((w, i) => {
-      w.postMessage({ type: "init", id: i, k, points: chunks[i] });
+      w.postMessage({
+        type: "init",
+        id: i,
+        k,
+        pointsBuffer,
+        assignmentsBuffer,
+        start: ranges[i].start,
+        end: ranges[i].end
+      });
       return waitForReady(w, i);
     });
 
@@ -293,18 +295,9 @@ async function runKMeansParallel(cities, k, opts = {}) {
 
     setStatus(`Concluido em ${iter} iteracoes. Montando clusters...`);
 
-    const finalParts = await Promise.all(ws.map((w, i) => collectAssignments(w, i)));
-    const assignments = new Array(n).fill(-1);
-
-    for (const part of finalParts) {
-      for (let i = 0; i < part.indices.length; i++) {
-        assignments[part.indices[i]] = part.assignments[i];
-      }
-    }
-
     const clusters = Array.from({ length: k }, () => []);
     for (let i = 0; i < n; i++) {
-      const a = assignments[i];
+      const a = sharedAssignments[i];
       if (a >= 0) clusters[a].push(arr[i].orig);
     }
 
@@ -352,8 +345,6 @@ stopBtn.addEventListener("click", () => {
     runBtn.disabled = false;
   }
 });
-
-
 
 
 

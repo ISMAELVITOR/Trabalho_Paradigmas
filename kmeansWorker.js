@@ -1,27 +1,25 @@
 // kmeansWorker.js
-// Worker para etapa de atribuicao (assignment) do K-means em paralelo.
+// Worker para etapa de atribuicao (assignment) do K-means em paralelo, com memoria compartilhada.
 // Protocolo:
-// - { type: "init", id, k, points: [ { vec: [x,y,z], index } ] }
-// - { type: "step", id, iter, centroids: [ [x,y,z], ... ] }
-// - { type: "collect", id }
+// - { type: "init", id, k, pointsBuffer, assignmentsBuffer, start, end }
+// - { type: "step", id, iter, centroids }
 // Respostas:
 // - { type: "ready", id }
 // - { type: "partial", id, iter, sums, counts, changed }
-// - { type: "final", id, assignments, indices }
 // - { type: "error", error }
 
 let workerId = 0;
-let points = [];
-let assignments = [];
 let kValue = 0;
+let startIdx = 0;
+let endIdx = 0;
+let pointsView = null; // Float64Array
+let assignmentsView = null; // Int32Array
 
-function euclidean(a, b) {
-  let s = 0;
-  for (let i = 0; i < a.length; i++) {
-    const d = a[i] - b[i];
-    s += d * d;
-  }
-  return Math.sqrt(s);
+function euclidean3(ax, ay, az, bx, by, bz) {
+  const dx = ax - bx;
+  const dy = ay - by;
+  const dz = az - bz;
+  return Math.sqrt(dx * dx + dy * dy + dz * dz);
 }
 
 onmessage = function (ev) {
@@ -31,8 +29,10 @@ onmessage = function (ev) {
   if (msg.type === "init") {
     workerId = msg.id || 0;
     kValue = Math.max(1, Math.floor(msg.k || 1));
-    points = Array.isArray(msg.points) ? msg.points : [];
-    assignments = new Array(points.length).fill(-1);
+    startIdx = msg.start || 0;
+    endIdx = msg.end || 0;
+    pointsView = new Float64Array(msg.pointsBuffer);
+    assignmentsView = new Int32Array(msg.assignmentsBuffer);
     postMessage({ type: "ready", id: workerId });
     return;
   }
@@ -44,24 +44,32 @@ onmessage = function (ev) {
       const counts = new Array(kValue).fill(0);
       let changed = false;
 
-      for (let i = 0; i < points.length; i++) {
-        const v = points[i].vec;
+      for (let i = startIdx; i < endIdx; i++) {
+        const base = i * 3;
+        const x = pointsView[base];
+        const y = pointsView[base + 1];
+        const z = pointsView[base + 2];
+
         let best = -1;
         let bestDist = Infinity;
         for (let j = 0; j < centroids.length; j++) {
-          const d = euclidean(v, centroids[j]);
+          const c = centroids[j];
+          const d = euclidean3(x, y, z, c[0], c[1], c[2]);
           if (d < bestDist) {
             bestDist = d;
             best = j;
           }
         }
-        if (assignments[i] !== best) {
-          assignments[i] = best;
+
+        const prev = assignmentsView[i];
+        if (prev !== best) {
+          assignmentsView[i] = best;
           changed = true;
         }
-        sums[best][0] += v[0];
-        sums[best][1] += v[1];
-        sums[best][2] += v[2];
+
+        sums[best][0] += x;
+        sums[best][1] += y;
+        sums[best][2] += z;
         counts[best] += 1;
       }
 
@@ -76,12 +84,6 @@ onmessage = function (ev) {
     } catch (err) {
       postMessage({ type: "error", error: err?.message || String(err) });
     }
-    return;
-  }
-
-  if (msg.type === "collect") {
-    const indices = points.map((p) => p.index);
-    postMessage({ type: "final", id: workerId, assignments, indices });
     return;
   }
 };
