@@ -8,11 +8,25 @@ const statusEl = document.getElementById("status");
 const clusterContainer = document.getElementById("clusterContainer");
 const clusterControls = document.getElementById("clusterControls");
 
-let citiesData = null;
-let running = false;
+const initialState = {
+  citiesData: null,
+  running: false,
+  cancelRequested: false,
+  sharedAssignments: null
+};
+
+const createStore = (state) => {
+  let current = state;
+  const getState = () => current;
+  const setState = (update) => {
+    current = typeof update === "function" ? update(current) : update;
+  };
+  return { getState, setState };
+};
+
+const store = createStore(initialState);
+
 let workers = [];
-let cancelRequested = false;
-let sharedAssignments = null;
 
 // -- util: carregar JSON via fetch (arquivo padrao no servidor)
 async function loadDefault(path = "cidades-9960.json") {
@@ -21,9 +35,10 @@ async function loadDefault(path = "cidades-9960.json") {
     const res = await fetch(path);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
-    citiesData = Array.isArray(json) ? json : (json.data || json);
-    setStatus(`Arquivo padrao carregado: ${citiesData.length} cidades`);
-    return citiesData;
+    const data = Array.isArray(json) ? json : (json.data || json);
+    store.setState((s) => ({ ...s, citiesData: data }));
+    setStatus(`Arquivo padrao carregado: ${data.length} cidades`);
+    return data;
   } catch (err) {
     setStatus(`Erro ao carregar arquivo padrao: ${err.message || err}`);
     throw err;
@@ -39,7 +54,7 @@ function loadFromFileInput(file) {
       try {
         const json = JSON.parse(fr.result);
         const arr = Array.isArray(json) ? json : (json.data || json);
-        citiesData = arr;
+        store.setState((s) => ({ ...s, citiesData: arr }));
         setStatus(`Arquivo ${file.name} carregado: ${arr.length} cidades`);
         resolve(arr);
       } catch (err) {
@@ -207,13 +222,12 @@ function buildSharedPoints(arr) {
 }
 
 async function runKMeansParallel(cities, k, opts = {}) {
-  if (running) throw new Error("Ja esta executando");
+  if (store.getState().running) throw new Error("Ja esta executando");
 
   const maxIter = opts.maxIter || 100;
   const workerCount = Math.max(2, Math.min(opts.workers || (navigator.hardwareConcurrency || 4), 8));
 
-  cancelRequested = false;
-  running = true;
+  store.setState((s) => ({ ...s, cancelRequested: false, running: true }));
 
   try {
     setStatus("Normalizando dados...");
@@ -221,7 +235,7 @@ async function runKMeansParallel(cities, k, opts = {}) {
     const n = arr.length;
 
     const { pointsBuffer, assignmentsBuffer, assignmentsView } = buildSharedPoints(arr);
-    sharedAssignments = assignmentsView;
+    store.setState((s) => ({ ...s, sharedAssignments: assignmentsView }));
 
     const chunkSize = Math.ceil(n / workerCount);
     const ranges = Array.from({ length: workerCount }, (_, i) => {
@@ -253,7 +267,7 @@ async function runKMeansParallel(cities, k, opts = {}) {
     let iter = 0;
     let changed = true;
 
-    while (iter < maxIter && changed && !cancelRequested) {
+    while (iter < maxIter && changed && !store.getState().cancelRequested) {
       iter++;
 
       const partials = await Promise.all(ws.map((w, i) => stepWorker(w, i, iter, centroids)));
@@ -289,12 +303,13 @@ async function runKMeansParallel(cities, k, opts = {}) {
       }
     }
 
-    if (cancelRequested) {
+    if (store.getState().cancelRequested) {
       throw new Error("Execucao cancelada");
     }
 
     setStatus(`Concluido em ${iter} iteracoes. Montando clusters...`);
 
+    const sharedAssignments = store.getState().sharedAssignments || assignmentsView;
     const clusters = Array.from({ length: k }, () => []);
     for (let i = 0; i < n; i++) {
       const a = sharedAssignments[i];
@@ -304,12 +319,13 @@ async function runKMeansParallel(cities, k, opts = {}) {
     return clusters;
   } finally {
     terminateWorkers();
-    running = false;
+    store.setState((s) => ({ ...s, running: false }));
   }
 }
 
 runBtn.addEventListener("click", async () => {
   const k = Math.max(1, parseInt(kInput.value || "0", 10));
+  const { citiesData } = store.getState();
   if (!citiesData || !Array.isArray(citiesData) || citiesData.length === 0) {
     setStatus("Nenhum arquivo carregado. Carregue um arquivo JSON primeiro.");
     return;
@@ -336,15 +352,12 @@ runBtn.addEventListener("click", async () => {
 });
 
 stopBtn.addEventListener("click", () => {
-  if (running) {
-    cancelRequested = true;
+  if (store.getState().running) {
+    store.setState((s) => ({ ...s, cancelRequested: true, running: false }));
     terminateWorkers();
-    running = false;
     setStatus("Execucao interrompida.");
     stopBtn.disabled = true;
     runBtn.disabled = false;
   }
 });
-
-
 

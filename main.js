@@ -76,6 +76,15 @@ const createStore = (state, render) => {
   return { getState, setState };
 };
 
+const createAtom = (state) => {
+  let current = state;
+  const getState = () => current;
+  const setState = (update) => {
+    current = typeof update === "function" ? update(current) : update;
+  };
+  return { getState, setState };
+};
+
 const renderCities = (state, onAdd) => {
   const { cities, loading, error } = state;
   const list = el.citiesList;
@@ -256,7 +265,7 @@ el.clearSelectedBtn.addEventListener("click", () => {
    - Main agrega resultados em memoria e salva JSON
 */
 
-let bulkLoadController = { cancelled: false };
+const bulkState = createAtom({ cancelled: false });
 let bulkWorkers = [];
 
 function resetBulkWorkers() {
@@ -285,7 +294,7 @@ async function startBulkLoadParallel({
   perRequestDelayMs = 1200,
   workerCount = 3
 } = {}) {
-  bulkLoadController.cancelled = false;
+  bulkState.setState((s) => ({ ...s, cancelled: false }));
   resetBulkWorkers();
 
   el.loadAllBtn.disabled = true;
@@ -298,7 +307,7 @@ async function startBulkLoadParallel({
   // para respeitar limite global, aumentamos o delay por worker
   const perWorkerDelayMs = perRequestDelayMs * workerCount;
 
-  const allCities = [];
+  let allCities = [];
   let doneWorkers = 0;
 
   store.setState((s) => ({ ...s, loading: true }));
@@ -313,7 +322,7 @@ async function startBulkLoadParallel({
 
         if (msg.type === "page") {
           const slims = (msg.data || []).map(toSlimCity);
-          allCities.push(...slims);
+          allCities = allCities.concat(slims);
           const count = Math.min(allCities.length, target);
           el.progress.textContent = `${count} / ${target}`;
           return;
@@ -366,7 +375,7 @@ async function finalizeBulkLoad(allCities, target) {
   el.cancelLoadBtn.style.display = "none";
   el.loadAllBtn.disabled = false;
 
-  if (bulkLoadController.cancelled) {
+  if (bulkState.getState().cancelled) {
     el.progress.textContent = `Carga cancelada (${allCities.length} cidades coletadas).`;
     return allCities;
   }
@@ -392,7 +401,7 @@ async function finalizeBulkLoad(allCities, target) {
 }
 
 function cancelBulkLoad() {
-  bulkLoadController.cancelled = true;
+  bulkState.setState((s) => ({ ...s, cancelled: true }));
   resetBulkWorkers();
   el.cancelLoadBtn.style.display = "none";
   el.loadAllBtn.disabled = false;
@@ -411,5 +420,4 @@ el.cancelLoadBtn.addEventListener("click", () => {
 
 /* ---------- inicial ---------- */
 loadPage();
-
 
